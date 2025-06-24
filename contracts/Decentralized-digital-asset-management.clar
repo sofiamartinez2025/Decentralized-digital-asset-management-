@@ -334,3 +334,35 @@
   )
 )
 
+;; Permanent asset removal with comprehensive security validation
+;; This function enables authorized users to permanently delete assets
+;; from the registry with strict ownership verification requirements
+(define-public (execute-permanent-asset-removal (asset-registry-identifier uint))
+  (let
+    (
+      ;; Retrieve target asset record for deletion validation
+      (target-asset-record (unwrap! (map-get? blockchain-asset-registry { asset-registry-identifier: asset-registry-identifier })
+        asset-not-found-exception))
+    )
+    ;; ===============================================================================
+    ;; DELETION AUTHORIZATION AND VALIDATION
+    ;; ===============================================================================
+
+    ;; Verify that the target asset exists in the registry
+    (asserts! (confirm-asset-registry-presence asset-registry-identifier) asset-not-found-exception)
+
+    ;; Verify that the requesting principal owns the asset
+    (asserts! (is-eq (get asset-owner-principal target-asset-record) tx-sender) ownership-verification-failed-exception)
+
+    ;; ===============================================================================
+    ;; PERMANENT ASSET REMOVAL EXECUTION
+    ;; ===============================================================================
+
+    ;; Remove the asset record from the blockchain registry
+    (map-delete blockchain-asset-registry { asset-registry-identifier: asset-registry-identifier })
+
+    ;; Return success confirmation
+    (ok true)
+  )
+)
+
